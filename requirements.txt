@@ -1,0 +1,6 @@
+openai-whisper==20231117
+spleeter==2.4.2
+ffmpeg-python
+google-generativeai
+indic-transliteration
+python-dotenv
