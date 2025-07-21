@@ -216,10 +216,11 @@ Cleaned and formatted lyrics:
         return None
 
 # Step 4: Transliterate - Indic Transliteration
+
 def transliterate_lyrics(text):
     print("🔡 Romanizing lyrics (ITRANS)...")
     try:
-        romanized = transliterate(text, DEVANAGARI, ITRANS)
+        romanized = transliterate(text, DEVANAGARI, ITRANS).lower()  # Convert to lowercase
         with open("lyrics_romanized.txt", "w", encoding="utf-8") as f:
             f.write(romanized)
         print("✅ Romanized lyrics saved.")
