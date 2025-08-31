@@ -53,23 +53,37 @@ def clean_transcription(text):
     print("[SUCCESS] Cleaned lyrics ready.", flush=True)
     return cleaned
 
-# Full pipeline for English songs
-def process_song(audio_path):
+# Full pipeline for songs with fallback to Gemini API
+def process_song(audio_path, use_gemini=False):
     vocals_path = extract_vocals(audio_path)
-    transcription = transcribe_audio(vocals_path)
+    
+    if use_gemini:
+        # Import and use hindiapi for Gemini-powered translation
+        try:
+            from hindiapi import transcribe_audio as gemini_transcribe
+            transcription = gemini_transcribe(vocals_path)
+        except ImportError:
+            print("[ERROR] Could not import hindiapi. Make sure GEMINI_API_KEY is set in .env", flush=True)
+            return None
+    else:
+        # Use regular transcription
+        transcription = transcribe_audio(vocals_path)
+    
     cleaned_lyrics = clean_transcription(transcription)
     
     # Save the cleaned lyrics
-    output_file = "english_lyrics.txt"
+    output_file = "lyrics_output.txt"
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(cleaned_lyrics)
-    print(f"[SUCCESS] Cleaned English lyrics saved to {output_file}", flush=True)
+    print(f"[SUCCESS] Cleaned lyrics saved to {output_file}", flush=True)
     
     # Print the lyrics for Streamlit to capture
     print("\n" + "="*50)
     print("LYRICS OUTPUT:")
     print("="*50)
     print(cleaned_lyrics)
+    
+    return cleaned_lyrics
 
 # ---------- Entry ----------
 if __name__ == "__main__":
@@ -77,18 +91,30 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         # Called from Streamlit app with audio path as argument
         file_path = sys.argv[1]
+        use_gemini = len(sys.argv) > 2 and sys.argv[2].lower() == "gemini"
         
         if not os.path.exists(file_path):
             print("[ERROR] The file was not found. Please check the path and try again.")
             sys.exit(1)
         else:
-            process_song(file_path)
+            lyrics = process_song(file_path, use_gemini)
+            if not use_gemini:
+                print("\nAre you satisfied with the translation? (yes/no)")
+                feedback = input().strip().lower()
+                if feedback == "no":
+                    print("\n[INFO] Trying with Gemini API for better translation...", flush=True)
+                    process_song(file_path, use_gemini=True)
     else:
         # Interactive mode
-        print("*** English Song Lyrics Processor (Offline Mode) ***")
+        print("*** Song Lyrics Processor ***")
         file_path = input("Enter the full path to your song file (e.g., C:/ai/song.mp3): ").strip('"')
         
         if not os.path.exists(file_path):
             print("[ERROR] The file was not found. Please check the path and try again.")
         else:
-            process_song(file_path)
+            lyrics = process_song(file_path)
+            print("\nAre you satisfied with the translation? (yes/no)")
+            feedback = input().strip().lower()
+            if feedback == "no":
+                print("\n[INFO] Trying with Gemini API for better translation...", flush=True)
+                process_song(file_path, use_gemini=True)

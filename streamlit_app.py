@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-def run_backend_script(script_name, audio_path):
+def run_backend_script(script_name, audio_path, use_gemini=False):
     """Runs the specified backend script and returns the output."""
     try:
         # Set environment variable to handle Unicode properly on Windows
@@ -22,6 +22,11 @@ def run_backend_script(script_name, audio_path):
         # Create progress bar and status
         progress_bar = st.progress(0)
         status_text = st.empty()
+        
+        # Prepare command with optional Gemini flag
+        command = ["python", script_name, audio_path]
+        if use_gemini:
+            command.append("gemini")
         
         # Start the subprocess with streaming output
         process = subprocess.Popen(
@@ -216,19 +221,24 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Select script based on language
-                    if option == "Hindi":
-                        output = run_backend_script("hindi1.py", temp_audio_path)
-                        filename = "hindi_lyrics"
-                        language_flag = "🇮🇳"
-                    elif option == "English":
-                        output = run_backend_script("main.py", temp_audio_path)
-                        filename = "english_lyrics"
-                        language_flag = "🇺🇸"
-                    elif option == "Bilingual":
-                        output = run_backend_script("bilingual.py", temp_audio_path)
-                        filename = "bilingual_lyrics"
-                        language_flag = "🌏"
+                    # Process with initial transcription
+                    def process_transcription(use_gemini=False):
+                        if option == "Hindi":
+                            output = run_backend_script("hindi1.py", temp_audio_path, use_gemini)
+                            filename = "hindi_lyrics"
+                            language_flag = "🇮🇳"
+                        elif option == "English":
+                            output = run_backend_script("main.py", temp_audio_path, use_gemini)
+                            filename = "english_lyrics"
+                            language_flag = "🇺🇸"
+                        elif option == "Bilingual":
+                            output = run_backend_script("bilingual.py", temp_audio_path, use_gemini)
+                            filename = "bilingual_lyrics"
+                            language_flag = "🌏"
+                        return output, filename, language_flag
+
+                    # Initial transcription
+                    output, filename, language_flag = process_transcription()
 
                     # Clean up temporary file
                     try:
@@ -267,6 +277,39 @@ def main():
                             )
                             
                             st.markdown("</div>", unsafe_allow_html=True)
+                            
+                            # Feedback section
+                            st.markdown("### 🤔 How's the Quality?")
+                            col_feedback1, col_feedback2 = st.columns(2)
+                            
+                            with col_feedback1:
+                                if st.button("👍 Good Quality"):
+                                    st.success("Thanks for the feedback! 🌟")
+                            
+                            with col_feedback2:
+                                if st.button("👎 Try Improving"):
+                                    st.info("🔄 Retrying with enhanced AI model...")
+                                    output, filename, language_flag = process_transcription(use_gemini=True)
+                                    
+                                    # Display improved results
+                                    if output:
+                                        st.markdown("### ✨ Enhanced Translation")
+                                        lines = output.split('\n')
+                                        clean_lyrics = []
+                                        for line in lines:
+                                            if not any(marker in line for marker in ['[INFO]', '[SUCCESS]', '[ERROR]', 'INFO:spleeter']):
+                                                clean_line = line.strip()
+                                                if clean_line and not clean_line.startswith('='):
+                                                    clean_lyrics.append(clean_line)
+                                        
+                                        improved_lyrics = '\n'.join(clean_lyrics)
+                                        if improved_lyrics:
+                                            st.text_area(
+                                                "📝 Improved Lyrics:",
+                                                value=improved_lyrics,
+                                                height=300,
+                                                help="Enhanced translation using Gemini AI"
+                                            )
                             
                             # Download section
                             st.markdown("### 📥 Download Options")
