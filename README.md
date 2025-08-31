@@ -13,6 +13,7 @@ This tool separates vocals from the music and uses advanced AI models to generat
   - Cleaned Lyrics: Formatted with proper capitalization and punctuation.
   - Romanized Hindi: Transliterates Devanagari script into Latin (English) characters for easier reading.
 💻 Interactive Web UI: A user-friendly interface built with Streamlit that provides real-time progress updates.
+🧠 AI-Enhanced Formatting (Optional):** Use the Google Gemini API to intelligently clean and format Hindi lyrics for superior punctuation and readability.
 
 
 
@@ -24,3 +25,4 @@ This tool separates vocals from the music and uses advanced AI models to generat
 - Transcription: `faster-whisper` (an optimized implementation of OpenAI's Whisper model)
 
 - Transliteration: `indic-transliteration`
+
